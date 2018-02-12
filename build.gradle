@@ -26,7 +26,7 @@ repositories {
 }
 
 group = 'com.lifecosys.gradle'
-version = '0.2'
+version = '0.1'
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
@@ -35,7 +35,7 @@ compileKotlin {
 dependencies {
     compileOnly gradleApi()
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    compile("org.eclipse.jgit:org.eclipse.jgit:4.9.0.201710071750-r")
+    compile("org.eclipse.jgit:org.eclipse.jgit:4.10.0.201712302008-r")
 }
 
 
