@@ -12,11 +12,9 @@ class GitMavenRepoPlugin : Plugin<Project> {
             extensions.create("gitMavenRepo", GitMavenRepoConfig::class.java)
             afterEvaluate {
                 val gitMavenRepoConfig = extensions.getByName("gitMavenRepo") as GitMavenRepoConfig
-                val repo = GitMavenRepository(gitMavenRepoConfig.url)
+                val repo = GitMavenRepository(gitMavenRepoConfig.url, gitMavenRepoConfig.repoDir)
 
-                repositories.maven {
-                    it.setUrl(repo.repoDir)
-                }
+                repositories.maven { it.setUrl(repo.repoDir) }
                 addPublishConfiguration(repo, gitMavenRepoConfig)
             }
         }
@@ -26,9 +24,7 @@ class GitMavenRepoPlugin : Plugin<Project> {
         val publishingExtension = extensions.findByType(PublishingExtension::class.java)
 
         publishingExtension?.apply {
-            repositories.maven {
-                it.setUrl(repo.repoDir)
-            }
+            repositories.maven { it.setUrl(repo.repoDir) }
 
             if (gitMavenRepoConfig.release) {
                 tasks.getByName("publish").doLast {
@@ -42,11 +38,11 @@ class GitMavenRepoPlugin : Plugin<Project> {
 
 open class GitMavenRepoConfig {
     lateinit var url: String
+    var repoDir: String = "${System.getProperty("user.home")}/.gitMavenRepo"
     var release: Boolean = false
 }
 
-class GitMavenRepository(val url: String) {
-    val repoDir = "${System.getProperty("user.home")}/.ehome/maven-repo/ehome-base"
+class GitMavenRepository(val url: String, val repoDir: String) {
     val git = initGit()
     private fun initGit(): Git {
         return if (!File(repoDir).exists()) {
