@@ -73,7 +73,7 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
             }
             cloneCommand.call()
         }
-
+        Git.open(File(config.repoDir)).pull().call()
     }
 
     fun addAndPush(message: String) {
