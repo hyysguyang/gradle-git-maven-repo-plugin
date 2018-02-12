@@ -15,6 +15,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.gradle.plugin-publish' version '0.9.7'
+    id "com.jfrog.bintray" version "1.7.3"
 }
 
 
@@ -26,7 +27,8 @@ repositories {
 }
 
 group = 'com.lifecosys.gradle'
-version = '0.3-SNAPSHOTS'
+version = '0.2'
+description="Git Maven Repository"
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
@@ -57,6 +59,28 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+        }
+    }
+}
+
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    publications = ['mavenJava']
+    pkg {
+        repo = 'maven'
+        name = 'git-maven-repo'
+        desc = "Git Maven Repository"
+        userOrg = System.getenv('BINTRAY_USER')
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/hyysguyang/gradle-git-maven-repo-plugin.git'
+        labels = ['git', 'maven', 'repository']
+        publicDownloadNumbers = true
+        version {
+            desc = 'Git Maven Repository'
+            released  = new Date()
+            attributes = ['gradle-plugin': 'com.lifecosys.gradle.git-maven-repo']
         }
     }
 }

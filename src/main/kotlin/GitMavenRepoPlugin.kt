@@ -12,8 +12,6 @@ import org.gradle.api.logging.Logging
 import org.gradle.api.publish.PublishingExtension
 import java.io.File
 
-val logger = Logging.getLogger(GitMavenRepoPlugin::class.java)
-
 class GitMavenRepoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
@@ -21,7 +19,9 @@ class GitMavenRepoPlugin : Plugin<Project> {
             extensions.create("gitMavenRepo", GitMavenRepoConfig::class.java)
             afterEvaluate {
                 val gitMavenRepoConfig = extensions.getByName("gitMavenRepo") as GitMavenRepoConfig
+                logger.info("gitMavenRepo: $gitMavenRepoConfig")
                 val repo = GitMavenRepository(gitMavenRepoConfig)
+                repo.logger=logger
                 repositories.maven { it.setUrl(gitMavenRepoConfig.repoDir) }
                 addPublishConfiguration(repo)
             }
@@ -50,30 +50,43 @@ open class GitMavenRepoConfig {
     var gitPassword: String = ""
     var repoDir: String = "${System.getProperty("user.home")}/.gitMavenRepo"
     var release: Boolean = false
+
+    override fun toString(): String {
+        return "GitMavenRepoConfig(url='$url', gitUsername='$gitUsername', gitPassword='$gitPassword', repoDir='$repoDir', release=$release)"
+    }
+
 }
 
 
 class GitMavenRepository(val config: GitMavenRepoConfig) {
-    init {
-        if (!File(config.repoDir).exists()) {
-            logger.info("Cloning repository ${config.url} to ${config.repoDir}")
-            val cloneCommand = Git.cloneRepository().setURI(config.url).setDirectory(File(config.repoDir))
+    var logger = Logging.getLogger(GitMavenRepository::class.java)
 
-            if (config.url.startsWith("http")) {
-                logger.info("Process http repository")
-                cloneCommand.setCredentialsProvider(UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword))
-            } else {
-                logger.info("Process ssh repository")
-                cloneCommand.setTransportConfigCallback {
-                    it as SshTransport
-                    it.sshSessionFactory = object : JschConfigSessionFactory() {
-                        override fun configure(hc: OpenSshConfig.Host?, session: Session?) {}
-                    }
-                }
-            }
-            cloneCommand.call()
+    init {
+        require(config.url.isNotBlank(), { "Url must not be empty" })
+        if (!File(config.repoDir).exists()) {
+            cloneRepo()
         }
         Git.open(File(config.repoDir)).pull().call()
+    }
+
+    private fun cloneRepo() {
+        logger.info("Cloning repository ${config.url} to ${config.repoDir}")
+        val cloneCommand = Git.cloneRepository().setURI(config.url).setDirectory(File(config.repoDir))
+
+        if (config.url.startsWith("http")) {
+            logger.info("Process http repository")
+            cloneCommand.setCredentialsProvider(UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword))
+        } else {
+            logger.info("Process ssh repository")
+            cloneCommand.setTransportConfigCallback {
+                it as SshTransport
+                it.sshSessionFactory = object : JschConfigSessionFactory() {
+                    override fun configure(hc: OpenSshConfig.Host?, session: Session?) {}
+                }
+            }
+        }
+        cloneCommand.call()
+        logger.info("Clone repository completed.")
     }
 
     fun addAndPush(message: String) {
