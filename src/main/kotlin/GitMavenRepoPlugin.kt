@@ -8,10 +8,8 @@ import java.io.File
 
 class GitMavenRepoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-
-        with(project){
+        with(project) {
             extensions.create("gitMavenRepo", GitMavenRepoConfig::class.java)
-
             afterEvaluate {
                 val gitMavenRepoConfig = extensions.getByName("gitMavenRepo") as GitMavenRepoConfig
                 val repo = GitMavenRepository(gitMavenRepoConfig.url)
@@ -19,29 +17,30 @@ class GitMavenRepoPlugin : Plugin<Project> {
                 repositories.maven {
                     it.setUrl(repo.repoDir)
                 }
-                val publishingExtension = extensions.findByType(PublishingExtension::class.java)
+                addPublishConfiguration(repo, gitMavenRepoConfig)
+            }
+        }
+    }
 
+    private fun Project.addPublishConfiguration(repo: GitMavenRepository, gitMavenRepoConfig: GitMavenRepoConfig) {
+        val publishingExtension = extensions.findByType(PublishingExtension::class.java)
 
+        publishingExtension?.apply {
+            repositories.maven {
+                it.setUrl(repo.repoDir)
+            }
 
-                if (publishingExtension != null) {
-                    publishingExtension.repositories.maven {
-                        it.setUrl(repo.repoDir)
-                    }
-                    if (gitMavenRepoConfig.release) {
-                        tasks.getByName("publish").doLast {
-                            val message = "Release ${group}:${name}:${version} "
-                            repo.addAndPush(message)
-                        }
-                    }
+            if (gitMavenRepoConfig.release) {
+                tasks.getByName("publish").doLast {
+                    val message = "Release ${group}:${name}:${version} "
+                    repo.addAndPush(message)
                 }
             }
         }
-
-
     }
 }
 
-open class GitMavenRepoConfig{
+open class GitMavenRepoConfig {
     lateinit var url: String
     var release: Boolean = false
 }
