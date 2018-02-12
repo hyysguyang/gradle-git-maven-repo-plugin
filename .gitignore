@@ -1,0 +1,15 @@
+# Build
+*.class
+*.log
+.demo_data
+logs
+classes
+target
+buildSrc/build
+.gradle
+.idea
+build
+out
+
+*.iml
+
