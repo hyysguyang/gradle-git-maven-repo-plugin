@@ -2,14 +2,21 @@
 
 Apply plugin
 
-`apply plugin: "com.lifecosys.gradle.git-maven-repo"`
+```groovy
+plugins {
+  id "com.lifecosys.gradle.git-maven-repo" version "0.4"
+}
+```
 
 and config with the git url
 
-```gradle
+```groovy
 gitMavenRepo {
     url = "https://github.com/USERNAME/PROJECT"
-    release = true
+    gitUsername = "GIT USERNAME" //If use http authentication, such as gitlab or github.
+    gitPassword = "GIT USER PASSWORD" //If use http authentication, such as gitlab or github.
+    repoDir = "LOCAL REPOSITORY" //Default is ~/.gitMavenRepo
+    release = true // To deploy the artifact to the Remote GitMavenRepo 
 }
 ```
 
