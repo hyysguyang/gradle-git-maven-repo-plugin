@@ -2,6 +2,7 @@ package com.lifecosys.gradle
 
 import com.jcraft.jsch.Session
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.transport.JschConfigSessionFactory
 import org.eclipse.jgit.transport.OpenSshConfig
 import org.eclipse.jgit.transport.SshTransport
@@ -21,7 +22,7 @@ class GitMavenRepoPlugin : Plugin<Project> {
                 val gitMavenRepoConfig = extensions.getByName("gitMavenRepo") as GitMavenRepoConfig
                 logger.info("gitMavenRepo: $gitMavenRepoConfig")
                 val repo = GitMavenRepository(gitMavenRepoConfig)
-                repo.logger=logger
+                repo.logger = logger
                 repositories.maven { it.setUrl(gitMavenRepoConfig.repoDir) }
                 addPublishConfiguration(repo)
             }
@@ -66,7 +67,9 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
         if (!File(config.repoDir).exists()) {
             cloneRepo()
         }
-        Git.open(File(config.repoDir)).pull().call()
+        val git = Git.open(File(config.repoDir))
+        git.reset().setMode(ResetCommand.ResetType.HARD).setRef("remotes/origin/HEAD").call()
+        git.pull().call()
     }
 
     private fun cloneRepo() {
