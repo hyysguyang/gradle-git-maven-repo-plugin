@@ -68,7 +68,7 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
             cloneRepo()
         }
         val git = Git.open(File(config.repoDir))
-        git.reset().setMode(ResetCommand.ResetType.HARD).setRef("remotes/origin/HEAD").call()
+        git.reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/master").call()
         git.pull().call()
     }
 
