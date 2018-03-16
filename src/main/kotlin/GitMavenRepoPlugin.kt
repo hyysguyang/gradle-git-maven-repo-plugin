@@ -61,6 +61,11 @@ open class GitMavenRepoConfig {
 
 class GitMavenRepository(val config: GitMavenRepoConfig) {
     var logger = Logging.getLogger(GitMavenRepository::class.java)
+    val credentialsProvider = UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword)
+    val transportConfigCallback = object : JschConfigSessionFactory() {
+        override fun configure(hc: OpenSshConfig.Host?, session: Session?) {}
+    }
+
 
     init {
         require(config.url.isNotBlank(), { "Url must not be empty" })
@@ -69,24 +74,22 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
         }
         val git = Git.open(File(config.repoDir))
         git.reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/master").call()
-        git.pull().call()
+        val pull = git.pull()
+        pull.setCredentialsProvider(credentialsProvider)
+        pull.setTransportConfigCallback {
+            if (it is SshTransport) it.sshSessionFactory = transportConfigCallback
+        }
+        pull.call()
     }
 
     private fun cloneRepo() {
         logger.info("Cloning repository ${config.url} to ${config.repoDir}")
         val cloneCommand = Git.cloneRepository().setURI(config.url).setDirectory(File(config.repoDir))
 
-        if (config.url.startsWith("http")) {
-            logger.info("Process http repository")
-            cloneCommand.setCredentialsProvider(UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword))
-        } else {
-            logger.info("Process ssh repository")
-            cloneCommand.setTransportConfigCallback {
-                it as SshTransport
-                it.sshSessionFactory = object : JschConfigSessionFactory() {
-                    override fun configure(hc: OpenSshConfig.Host?, session: Session?) {}
-                }
-            }
+        logger.info("Process repository: ${config.url}")
+        cloneCommand.setCredentialsProvider(credentialsProvider)
+        cloneCommand.setTransportConfigCallback {
+            (it as SshTransport).sshSessionFactory = transportConfigCallback
         }
         cloneCommand.call()
         logger.info("Clone repository completed.")
