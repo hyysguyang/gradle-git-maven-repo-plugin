@@ -3,6 +3,7 @@ package com.lifecosys.gradle
 import com.jcraft.jsch.Session
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.transport.JschConfigSessionFactory
 import org.eclipse.jgit.transport.OpenSshConfig
 import org.eclipse.jgit.transport.SshTransport
@@ -75,22 +76,28 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
         val git = Git.open(File(config.repoDir))
         git.reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/master").call()
         val pull = git.pull()
-        pull.setCredentialsProvider(credentialsProvider)
-        pull.setTransportConfigCallback {
-            if (it is SshTransport) it.sshSessionFactory = transportConfigCallback
-        }
+        configCommand(pull)
         pull.call()
     }
+
+    private fun <T : TransportCommand<T, R>, R> configCommand(command: TransportCommand<T, R>) {
+        if (config.url.startsWith("http")) {
+            command.setCredentialsProvider(credentialsProvider)
+        } else {
+            command.setTransportConfigCallback {
+                it as SshTransport
+                it.sshSessionFactory = transportConfigCallback
+            }
+        }
+    }
+
 
     private fun cloneRepo() {
         logger.info("Cloning repository ${config.url} to ${config.repoDir}")
         val cloneCommand = Git.cloneRepository().setURI(config.url).setDirectory(File(config.repoDir))
 
         logger.info("Process repository: ${config.url}")
-        cloneCommand.setCredentialsProvider(credentialsProvider)
-        cloneCommand.setTransportConfigCallback {
-            (it as SshTransport).sshSessionFactory = transportConfigCallback
-        }
+        configCommand(cloneCommand)
         cloneCommand.call()
         logger.info("Clone repository completed.")
     }
