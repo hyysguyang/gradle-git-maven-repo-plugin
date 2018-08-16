@@ -52,6 +52,7 @@ open class GitMavenRepoConfig {
     var gitPassword: String = ""
     var repoDir: String = "${System.getProperty("user.home")}/.gitMavenRepo"
     var release: Boolean = false
+    var sshConfig:Map<String,String> = emptyMap()
 
     override fun toString(): String {
         return "GitMavenRepoConfig(url='$url', gitUsername='$gitUsername', gitPassword='$gitPassword', repoDir='$repoDir', release=$release)"
@@ -64,7 +65,9 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
     var logger = Logging.getLogger(GitMavenRepository::class.java)
     val credentialsProvider = UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword)
     val transportConfigCallback = object : JschConfigSessionFactory() {
-        override fun configure(hc: OpenSshConfig.Host?, session: Session?) {}
+        override fun configure(hc: OpenSshConfig.Host, session: Session) {
+            config.sshConfig.forEach {session.setConfig(it.key, it.value)  }
+        }
     }
 
 

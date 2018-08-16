@@ -4,7 +4,7 @@ Apply plugin
 
 ```groovy
 plugins {
-  id "com.lifecosys.gradle.git-maven-repo" version "0.4"
+  id "com.lifecosys.gradle.git-maven-repo" version "0.7"
 }
 ```
 
@@ -17,6 +17,16 @@ gitMavenRepo {
     gitPassword = "GIT USER PASSWORD" //If use http authentication, such as gitlab or github.
     repoDir = "LOCAL REPOSITORY" //Default is ~/.gitMavenRepo
     release = true // To deploy the artifact to the Remote GitMavenRepo 
+}
+```
+
+Or
+
+```groovy
+gitMavenRepo {
+        url = "git@gitlab.com:360ehome/maven-repo.git"
+        release = project.hasProperty("release")
+        sshConfig = [StrictHostKeyChecking:'no']
 }
 ```
 
