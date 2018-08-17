@@ -1,5 +1,6 @@
 package com.lifecosys.gradle
 
+import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
@@ -65,8 +66,15 @@ class GitMavenRepository(val config: GitMavenRepoConfig) {
     var logger = Logging.getLogger(GitMavenRepository::class.java)
     val credentialsProvider = UsernamePasswordCredentialsProvider(config.gitUsername, config.gitPassword)
     val transportConfigCallback = object : JschConfigSessionFactory() {
-        override fun configure(hc: OpenSshConfig.Host, session: Session) {
-            config.sshConfig.forEach {session.setConfig(it.key, it.value)  }
+        init {
+            config.sshConfig.forEach {JSch.setConfig(it.key, it.value)  }
+        }
+
+        override fun configure(hc: OpenSshConfig.Host, session: Session) {}
+
+        override fun configureJSch(jsch: JSch) {
+            super.configureJSch(jsch)
+            jsch.setKnownHosts("${System.getProperty("user.home")}/.ssh/known_hosts")
         }
     }
 

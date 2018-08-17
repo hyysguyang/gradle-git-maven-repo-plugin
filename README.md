@@ -26,7 +26,7 @@ Or
 gitMavenRepo {
         url = "git@gitlab.com:360ehome/maven-repo.git"
         release = project.hasProperty("release")
-        sshConfig = [StrictHostKeyChecking:'no']
+        sshConfig = [StrictHostKeyChecking:'no'] //Not required.
 }
 ```
 
